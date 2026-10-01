@@ -53,7 +53,7 @@ app.use(errorHandler);
 const PORT = process.env.PORT || 5000;
 connectDB().then(() => {
   server.listen(PORT, () => {
-    console.log(`🚀 ${process.env.BUSINESS_NAME || 'AutoPlug Tz'} running on http://localhost:${PORT}`);
+    console.log(`🚀 ${process.env.BUSINESS_NAME || 'AutoPlug Tz'} running at http://localhost:${PORT}`);
     console.log(`👑 Admin panel: http://localhost:${PORT}/admin`);
   });
 });
