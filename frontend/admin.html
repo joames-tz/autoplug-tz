@@ -1,0 +1,751 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>AutoPlug Tz — Admin Control Center</title>
+<style>
+  * { margin:0; padding:0; box-sizing:border-box; }
+  :root {
+    --primary:#0a84ff; --primary-dark:#0062cc; --primary-light:#e6f2ff;
+    --accent:#ff9500;
+    --bg:#0f1115; --bg2:#171a21; --card:#1c2028; --card2:#232833;
+    --text:#e8eaed; --text-dim:#9aa3b2; --border:#2b303b;
+    --success:#22c55e; --danger:#ef4444; --warn:#f59e0b;
+    --shadow:0 4px 20px rgba(0,0,0,0.35);
+  }
+  body { font-family:-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; background:var(--bg); color:var(--text); min-height:100vh; display:flex; }
+  a { color:var(--primary); }
+
+  /* ---------- LOGIN ---------- */
+  .login-screen { position:fixed; inset:0; background:var(--bg); display:flex; align-items:center; justify-content:center; z-index:1000; padding:20px; }
+  .login-card { background:var(--card); border:1px solid var(--border); border-radius:18px; padding:34px; width:100%; max-width:400px; box-shadow:var(--shadow); }
+  .login-card .brand-big { display:flex; align-items:center; gap:12px; margin-bottom:26px; }
+  .login-card .brand-big .logo { width:52px; height:52px; border-radius:12px; background:linear-gradient(135deg, var(--primary), var(--accent)); display:flex; align-items:center; justify-content:center; font-size:26px; }
+  .login-card .brand-big h2 { font-size:19px; }
+  .login-card .brand-big small { font-size:11px; color:var(--text-dim); }
+  .login-card h3 { margin-bottom:6px; }
+  .login-card p.hint { color:var(--text-dim); font-size:13px; margin-bottom:22px; }
+
+  /* ---------- SIDEBAR ---------- */
+  .sidebar { width:250px; background:var(--bg2); border-right:1px solid var(--border); padding:22px 0; position:fixed; top:0; bottom:0; left:0; display:flex; flex-direction:column; z-index:100; }
+  .sidebar .brand { padding:0 22px 22px; border-bottom:1px solid var(--border); display:flex; align-items:center; gap:10px; }
+  .sidebar .brand .logo { width:40px; height:40px; border-radius:10px; background:linear-gradient(135deg, var(--primary), var(--accent)); display:flex; align-items:center; justify-content:center; font-size:22px; }
+  .sidebar .brand h1 { font-size:17px; font-weight:800; }
+  .sidebar .brand small { display:block; font-size:10px; color:var(--text-dim); letter-spacing:0.5px; }
+  .sidebar nav { flex:1; padding:14px 0; }
+  .nav-item { display:flex; align-items:center; gap:12px; padding:11px 22px; cursor:pointer; color:var(--text-dim); font-size:14px; font-weight:500; border-left:3px solid transparent; transition:all 0.15s; }
+  .nav-item:hover { background:var(--card); color:var(--text); }
+  .nav-item.active { background:var(--card); color:var(--text); border-left-color:var(--primary); }
+  .nav-item .ico { font-size:17px; width:20px; text-align:center; }
+  .nav-item .count { margin-left:auto; background:var(--primary); color:white; font-size:10px; font-weight:700; padding:2px 7px; border-radius:10px; }
+  .nav-item .count.warn { background:var(--warn); color:#1a1a1a; }
+  .sidebar .footer { padding:14px 22px; border-top:1px solid var(--border); font-size:12px; color:var(--text-dim); }
+  .sidebar .footer .admin-name { color:var(--text); font-weight:700; margin-bottom:6px; }
+
+  /* ---------- MAIN ---------- */
+  .main { flex:1; margin-left:250px; min-height:100vh; padding:0 0 40px; }
+  .topbar { background:var(--bg2); border-bottom:1px solid var(--border); padding:16px 28px; position:sticky; top:0; z-index:50; display:flex; align-items:center; justify-content:space-between; gap:16px; }
+  .topbar h2 { font-size:20px; font-weight:700; }
+  .topbar .sub { font-size:12px; color:var(--text-dim); margin-top:2px; }
+  .page { padding:24px 28px; }
+
+  /* ---------- STATS ---------- */
+  .stats-grid { display:grid; grid-template-columns:repeat(auto-fit, minmax(190px, 1fr)); gap:16px; margin-bottom:24px; }
+  .stat-card { background:var(--card); border:1px solid var(--border); border-radius:14px; padding:18px; position:relative; overflow:hidden; }
+  .stat-card::before { content:''; position:absolute; top:0; left:0; right:0; height:3px; background:var(--primary); }
+  .stat-card.success::before { background:var(--success); }
+  .stat-card.warn::before { background:var(--warn); }
+  .stat-card.accent::before { background:var(--accent); }
+  .stat-card .label { font-size:12px; color:var(--text-dim); text-transform:uppercase; letter-spacing:0.5px; font-weight:600; }
+  .stat-card .num { font-size:28px; font-weight:800; margin:8px 0 4px; letter-spacing:-1px; }
+  .stat-card .trend { font-size:12px; color:var(--text-dim); }
+
+  /* ---------- CARDS ---------- */
+  .card { background:var(--card); border:1px solid var(--border); border-radius:14px; overflow:hidden; margin-bottom:16px; }
+  .card-pad { padding:18px; }
+  .card-head { padding:16px 18px; border-bottom:1px solid var(--border); display:flex; align-items:center; justify-content:space-between; gap:12px; flex-wrap:wrap; }
+  .card-head h4 { font-size:15px; }
+  .card-head .sub { font-size:12px; color:var(--text-dim); margin-top:2px; }
+
+  /* ---------- BUTTONS ---------- */
+  .btn { padding:9px 16px; border-radius:9px; border:none; background:var(--primary); color:white; font-size:13px; font-weight:600; cursor:pointer; display:inline-flex; align-items:center; gap:6px; white-space:nowrap; transition:all 0.15s; font-family:inherit; }
+  .btn:hover { background:var(--primary-dark); }
+  .btn.small { padding:6px 11px; font-size:12px; }
+  .btn.ghost { background:transparent; border:1px solid var(--border); color:var(--text); }
+  .btn.ghost:hover { background:var(--card2); }
+  .btn.success { background:var(--success); }
+  .btn.danger { background:var(--danger); }
+  .btn.warn { background:var(--warn); color:#1a1a1a; }
+  .btn.full { width:100%; }
+  .btn:disabled { opacity:0.5; cursor:not-allowed; }
+
+  /* ---------- FORMS ---------- */
+  .form-group { margin-bottom:14px; }
+  .form-group label { display:block; font-size:12px; font-weight:700; margin-bottom:6px; color:var(--text-dim); text-transform:uppercase; letter-spacing:0.4px; }
+  .form-group input, .form-group textarea, .form-group select { width:100%; padding:10px 12px; background:var(--bg2); border:1px solid var(--border); border-radius:9px; color:var(--text); font-size:13px; font-family:inherit; }
+  .form-group input:focus, .form-group textarea:focus, .form-group select:focus { outline:none; border-color:var(--primary); }
+  .form-group textarea { resize:vertical; min-height:80px; }
+  .form-row { display:grid; grid-template-columns:1fr 1fr; gap:14px; }
+
+  /* ---------- TABLES ---------- */
+  .tbl-wrap { overflow-x:auto; }
+  table.tbl { width:100%; border-collapse:collapse; font-size:13px; }
+  table.tbl th, table.tbl td { padding:11px 14px; text-align:left; border-bottom:1px solid var(--border); }
+  table.tbl th { background:var(--bg2); font-weight:700; font-size:11px; text-transform:uppercase; letter-spacing:0.5px; color:var(--text-dim); }
+  table.tbl tr:hover td { background:var(--card2); }
+
+  /* ---------- BADGES ---------- */
+  .badge { display:inline-block; padding:3px 9px; border-radius:6px; font-size:10px; font-weight:700; text-transform:uppercase; letter-spacing:0.4px; }
+  .badge.pending { background:rgba(245,158,11,0.15); color:var(--warn); }
+  .badge.confirmed { background:rgba(59,130,246,0.15); color:#3b82f6; }
+  .badge.ready { background:rgba(139,92,246,0.15); color:#8b5cf6; }
+  .badge.shipped { background:rgba(255,149,0,0.15); color:var(--accent); }
+  .badge.completed { background:rgba(34,197,94,0.15); color:var(--success); }
+  .badge.cancelled { background:rgba(239,68,68,0.15); color:var(--danger); }
+
+  /* ---------- IMAGES ---------- */
+  .img-preview { display:grid; grid-template-columns:repeat(auto-fill, minmax(100px, 1fr)); gap:10px; margin-top:10px; }
+  .img-preview .item { position:relative; aspect-ratio:1; border-radius:10px; overflow:hidden; border:1px solid var(--border); }
+  .img-preview .item img { width:100%; height:100%; object-fit:cover; }
+  .img-preview .item .del { position:absolute; top:4px; right:4px; background:var(--danger); color:white; border:none; width:24px; height:24px; border-radius:50%; font-size:14px; cursor:pointer; }
+
+  /* ---------- PRODUCT GRID ---------- */
+  .product-grid { display:grid; grid-template-columns:repeat(auto-fill, minmax(260px, 1fr)); gap:16px; }
+  .product-card { background:var(--card); border:1px solid var(--border); border-radius:14px; overflow:hidden; }
+  .product-card img { width:100%; height:180px; object-fit:cover; background:var(--card2); }
+  .product-card .body { padding:14px; }
+  .product-card h4 { font-size:14px; margin-bottom:4px; }
+  .product-card .price { color:var(--accent); font-weight:800; font-size:16px; }
+  .product-card .meta { font-size:11px; color:var(--text-dim); margin:6px 0; }
+  .product-card .actions { display:flex; gap:6px; margin-top:10px; }
+
+  /* ---------- MODAL ---------- */
+  .modal-bg { position:fixed; inset:0; background:rgba(0,0,0,0.75); display:none; align-items:center; justify-content:center; z-index:500; padding:20px; backdrop-filter:blur(4px); }
+  .modal-bg.open { display:flex; }
+  .modal { background:var(--card); border-radius:16px; width:100%; max-width:640px; max-height:92vh; overflow-y:auto; border:1px solid var(--border); }
+  .modal-head { padding:18px 20px; border-bottom:1px solid var(--border); display:flex; justify-content:space-between; align-items:center; position:sticky; top:0; background:var(--card); z-index:2; }
+  .modal-head h3 { font-size:17px; }
+  .modal-close { background:none; border:none; color:var(--text-dim); font-size:24px; cursor:pointer; line-height:1; }
+  .modal-body { padding:20px; }
+
+  /* ---------- TOAST ---------- */
+  .toast { position:fixed; bottom:24px; right:24px; background:var(--card2); border:1px solid var(--border); color:var(--text); padding:13px 20px; border-radius:11px; z-index:9999; font-size:14px; box-shadow:var(--shadow); transform:translateY(100px); opacity:0; transition:all 0.3s; max-width:90vw; }
+  .toast.show { transform:translateY(0); opacity:1; }
+  .toast.success { border-left:3px solid var(--success); }
+  .toast.danger { border-left:3px solid var(--danger); }
+  .toast.warn { border-left:3px solid var(--warn); }
+
+  /* ---------- MISC ---------- */
+  .row { display:flex; gap:10px; flex-wrap:wrap; }
+  .row > * { flex:1; min-width:140px; }
+  .divider { height:1px; background:var(--border); margin:16px 0; }
+  .empty { text-align:center; padding:48px 20px; color:var(--text-dim); }
+  .empty .ico { font-size:52px; opacity:0.35; margin-bottom:10px; }
+  .muted { color:var(--text-dim); }
+  .text-sm { font-size:12px; }
+  .mt-1 { margin-top:8px; } .mt-2 { margin-top:16px; }
+  .mb-2 { margin-bottom:16px; }
+  .spinner { display:inline-block; width:14px; height:14px; border:2px solid rgba(255,255,255,0.3); border-top-color:white; border-radius:50%; animation:spin 0.7s linear infinite; }
+  @keyframes spin { to { transform:rotate(360deg); } }
+  .hidden { display:none !important; }
+
+  @media (max-width:900px) {
+    .sidebar { transform:translateX(-100%); transition:transform 0.25s; }
+    .sidebar.open { transform:translateX(0); }
+    .main { margin-left:0; }
+    .page { padding:16px; }
+    .topbar { padding:12px 16px; }
+  }
+</style>
+</head>
+<body>
+
+<!-- ============ LOGIN SCREEN ============ -->
+<div class="login-screen" id="loginScreen">
+  <div class="login-card">
+    <div class="brand-big">
+      <div class="logo">⚙️</div>
+      <div>
+        <h2>AutoPlug Tz</h2>
+        <small>ADMIN CONTROL CENTER</small>
+      </div>
+    </div>
+    <h3>Sign In</h3>
+    <p class="hint">Restricted area — administrators only.</p>
+    <form id="loginForm" onsubmit="handleLogin(event)">
+      <div class="form-group">
+        <label>Username</label>
+        <input required name="username" placeholder="Enter username" autocomplete="username">
+      </div>
+      <div class="form-group">
+        <label>Password</label>
+        <input required type="password" name="password" placeholder="Enter password" autocomplete="current-password">
+      </div>
+      <button class="btn full" type="submit" id="loginBtn">Sign In →</button>
+    </form>
+  </div>
+</div>
+
+<!-- ============ ADMIN PANEL ============ -->
+<div id="adminPanel" style="display:none;">
+  <aside class="sidebar" id="sidebar">
+    <div class="brand">
+      <div class="logo">⚙️</div>
+      <div>
+        <h1>AutoPlug Tz</h1>
+        <small>ADMIN</small>
+      </div>
+    </div>
+    <nav id="nav"></nav>
+    <div class="footer">
+      <div class="admin-name">👤 joames</div>
+      <div>Super Admin</div>
+      <button class="btn ghost small mt-1" style="width:100%;" onclick="logout()">Sign Out</button>
+    </div>
+  </aside>
+
+  <div class="main">
+    <div class="topbar">
+      <div>
+        <h2 id="pageTitle">Dashboard</h2>
+        <div class="sub" id="pageSub">Overview</div>
+      </div>
+      <button class="btn ghost small" onclick="refreshAll()">🔄 Refresh</button>
+    </div>
+    <div class="page" id="pageContent"></div>
+  </div>
+</div>
+
+<!-- ============ TOAST ============ -->
+<div class="toast" id="toast"></div>
+
+<script>
+/* ============================================================
+   AutoPlug Tz — Admin Panel
+   ============================================================ */
+
+const API_BASE = '/api';
+
+const API = {
+  token: localStorage.getItem('autoplug_admin_token') || null,
+  setToken(t) {
+    this.token = t;
+    if (t) localStorage.setItem('autoplug_admin_token', t);
+    else localStorage.removeItem('autoplug_admin_token');
+  },
+  async req(path, options = {}) {
+    const headers = { ...(options.headers || {}) };
+    if (!(options.body instanceof FormData)) headers['Content-Type'] = 'application/json';
+    if (this.token) headers.Authorization = `Bearer ${this.token}`;
+    const res = await fetch(`${API_BASE}${path}`, { ...options, headers });
+    if (!res.ok) {
+      const err = await res.json().catch(() => ({ error: res.statusText }));
+      throw new Error(err.error || 'Request failed');
+    }
+    return res.json();
+  },
+  get:  (p)    => API.req(p),
+  post: (p, b) => API.req(p, { method:'POST', body: b instanceof FormData ? b : JSON.stringify(b) }),
+  patch:(p, b) => API.req(p, { method:'PATCH', body: JSON.stringify(b) }),
+  del:  (p)    => API.req(p, { method:'DELETE' })
+};
+
+const $ = (s, el=document) => el.querySelector(s);
+const esc = (s) => String(s ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const fmtDate = (ts) => new Date(ts).toLocaleString();
+const fmtTime = (ts) => {
+  const s = Math.floor((Date.now() - new Date(ts).getTime()) / 1000);
+  if (s < 60) return 'just now';
+  if (s < 3600) return Math.floor(s/60) + 'm ago';
+  if (s < 86400) return Math.floor(s/3600) + 'h ago';
+  return Math.floor(s/86400) + 'd ago';
+};
+
+function toast(msg, type='') {
+  const t = $('#toast');
+  t.textContent = msg;
+  t.className = 'toast show ' + type;
+  clearTimeout(t._t); t._t = setTimeout(() => t.classList.remove('show'), 2600);
+}
+
+/* ---------- DATA STORE ---------- */
+const D = {
+  stats: { products:0, orders:0, pending:0, completed:0, revenue:0 },
+  products: [],
+  orders: [],
+  currentRoute: 'dashboard',
+  uploadImages: [],
+  uploadVideo: null
+};
+
+/* ============================================================
+   LOGIN
+   ============================================================ */
+async function handleLogin(e) {
+  e.preventDefault();
+  const btn = $('#loginBtn');
+  btn.disabled = true; btn.innerHTML = '<span class="spinner"></span> Signing in...';
+  const fd = new FormData(e.target);
+
+  try {
+    const { token } = await API.post('/admin/login', {
+      username: fd.get('username'),
+      password: fd.get('password')
+    });
+    API.setToken(token);
+    $('#loginScreen').style.display = 'none';
+    $('#adminPanel').style.display = 'flex';
+    bootAdmin();
+    toast('Welcome back, Admin 👑', 'success');
+  } catch (err) {
+    toast('Invalid credentials', 'danger');
+    btn.disabled = false; btn.textContent = 'Sign In →';
+  }
+}
+
+function logout() {
+  API.setToken(null);
+  location.reload();
+}
+
+/* ============================================================
+   ROUTER
+   ============================================================ */
+const routes = {
+  dashboard: { title:'Dashboard', sub:'Overview of your business', icon:'📊', render: renderDashboard },
+  products:  { title:'Products', sub:'Manage your spare parts', icon:'📦', render: renderProducts, badge: () => D.products.length },
+  add:       { title:'Add Product', sub:'Post a new product', icon:'➕', render: renderAddProduct },
+  orders:    { title:'Orders', sub:'Customer orders', icon:'🛒', render: renderOrders, badge: () => D.orders.filter(o=>o.status==='pending').length, badgeType:'warn' }
+};
+
+function navigate(route) {
+  D.currentRoute = route;
+  const r = routes[route];
+  $('#pageTitle').textContent = r.title;
+  $('#pageSub').textContent = r.sub;
+  renderNav();
+  $('#pageContent').innerHTML = r.render();
+}
+
+function renderNav() {
+  $('#nav').innerHTML = Object.entries(routes).map(([key, r]) => {
+    const badgeCount = r.badge ? r.badge() : 0;
+    const show = badgeCount > 0;
+    const badgeClass = r.badgeType || '';
+    return `<div class="nav-item ${key===D.currentRoute?'active':''}" onclick="navigate('${key}')">
+      <span class="ico">${r.icon}</span>
+      <span>${r.title}</span>
+      ${show ? `<span class="count ${badgeClass}">${badgeCount}</span>` : ''}
+    </div>`;
+  }).join('');
+}
+
+/* ============================================================
+   DATA LOADING
+   ============================================================ */
+async function loadAll() {
+  const results = await Promise.allSettled([
+    API.get('/admin/stats'),
+    API.get('/admin/products'),
+    API.get('/admin/orders')
+  ]);
+  D.stats    = results[0].value || { products:0, orders:0, pending:0, completed:0, revenue:0 };
+  D.products = results[1].value || [];
+  D.orders   = results[2].value || [];
+}
+
+async function refreshAll() {
+  try {
+    await loadAll();
+    renderNav();
+    navigate(D.currentRoute);
+    toast('Data refreshed', 'success');
+  } catch (err) { toast('Failed: ' + err.message, 'danger'); }
+}
+
+/* ============================================================
+   DASHBOARD
+   ============================================================ */
+function renderDashboard() {
+  return `
+    <div class="stats-grid">
+      <div class="stat-card">
+        <div class="label">Total Products</div>
+        <div class="num">${D.stats.products || 0}</div>
+        <div class="trend">Active listings</div>
+      </div>
+      <div class="stat-card success">
+        <div class="label">Total Orders</div>
+        <div class="num">${D.stats.orders || 0}</div>
+        <div class="trend">${D.stats.completed || 0} completed</div>
+      </div>
+      <div class="stat-card warn">
+        <div class="label">Pending Orders</div>
+        <div class="num">${D.stats.pending || 0}</div>
+        <div class="trend">${D.stats.pending > 0 ? '⚠ Needs attention' : 'All clear ✓'}</div>
+      </div>
+      <div class="stat-card accent">
+        <div class="label">Total Revenue</div>
+        <div class="num">TZS ${(D.stats.revenue || 0).toLocaleString()}</div>
+        <div class="trend">From completed orders</div>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-head"><h4>⚡ Quick Actions</h4></div>
+      <div class="card-pad">
+        <div class="row">
+          <button class="btn" onclick="navigate('add')">➕ Add New Product</button>
+          <button class="btn ghost" onclick="navigate('orders')">🛒 View Orders</button>
+          <button class="btn ghost" onclick="navigate('products')">📦 Manage Products</button>
+        </div>
+      </div>
+    </div>
+
+    ${D.stats.pending > 0 ? `
+    <div class="card">
+      <div class="card-head"><h4>🚨 Pending Orders</h4></div>
+      <div class="tbl-wrap">
+        <table class="tbl">
+          <tr><th>Date</th><th>Customer</th><th>Product</th><th>Total</th><th>Type</th><th>Status</th></tr>
+          ${D.orders.filter(o=>o.status==='pending').slice(0,5).map(o => `
+            <tr>
+              <td>${fmtTime(o.createdAt)}</td>
+              <td>${esc(o.customerName)}</td>
+              <td>${esc(o.productName)}</td>
+              <td>TZS ${o.totalAmount.toLocaleString()}</td>
+              <td>${o.deliveryMethod === 'pickup' ? '🏬 Pickup' : '🚚 Delivery'}</td>
+              <td><span class="badge ${o.status}">${o.status}</span></td>
+            </tr>
+          `).join('')}
+        </table>
+      </div>
+    </div>` : ''}
+  `;
+}
+
+/* ============================================================
+   PRODUCTS
+   ============================================================ */
+function renderProducts() {
+  if (!D.products.length) {
+    return `
+      <div class="card">
+        <div class="empty">
+          <div class="ico">📦</div>
+          <p>No products yet.</p>
+          <button class="btn mt-2" onclick="navigate('add')">➕ Add Your First Product</button>
+        </div>
+      </div>
+    `;
+  }
+
+  return `
+    <div class="product-grid">
+      ${D.products.map(p => `
+        <div class="product-card">
+          ${p.images?.[0] ? `<img src="${p.images[0]}" alt="${esc(p.name)}">` : '<div style="height:180px;display:flex;align-items:center;justify-content:center;background:var(--card2);font-size:40px;">📦</div>'}
+          <div class="body">
+            <h4>${esc(p.name)}</h4>
+            <div class="price">TZS ${p.price.toLocaleString()}</div>
+            <div class="meta">
+              🏷️ ${esc(p.category)} • 🚗 ${esc(p.carBrand)}${p.carModel ? ' ' + esc(p.carModel) : ''}
+            </div>
+            <div class="meta">Stock: ${p.stock} ${p.active ? '• ✅ Active' : '• ⏸ Inactive'}</div>
+            <div class="actions">
+              <button class="btn small ghost" onclick="viewProduct('${p._id}')">👁 View</button>
+              <button class="btn small danger" onclick="deleteProduct('${p._id}')">🗑 Delete</button>
+            </div>
+          </div>
+        </div>
+      `).join('')}
+    </div>
+  `;
+}
+
+async function deleteProduct(id) {
+  if (!confirm('Delete this product?')) return;
+  try {
+    await API.del('/admin/products/' + id);
+    toast('Product deleted', 'success');
+    await loadAll();
+    navigate('products');
+  } catch (err) { toast(err.message, 'danger'); }
+}
+
+function viewProduct(id) {
+  const p = D.products.find(x => x._id === id);
+  if (!p) return;
+  showModal(`📦 ${esc(p.name)}`, `
+    ${p.images?.length ? `<div class="img-preview mb-2">${p.images.map(img => `<div class="item"><img src="${img}"></div>`).join('')}</div>` : ''}
+    ${p.video ? `<video controls style="width:100%;border-radius:12px;margin-bottom:14px;"><source src="${p.video}"></video>` : ''}
+    <div class="text-sm" style="line-height:1.9;">
+      <div><b>Price:</b> TZS ${p.price.toLocaleString()}</div>
+      <div><b>Category:</b> ${esc(p.category)}</div>
+      <div><b>Car Brand:</b> ${esc(p.carBrand)}</div>
+      ${p.carModel ? `<div><b>Model:</b> ${esc(p.carModel)}</div>` : ''}
+      ${p.year ? `<div><b>Year:</b> ${esc(p.year)}</div>` : ''}
+      <div><b>Stock:</b> ${p.stock}</div>
+      <div><b>Status:</b> ${p.active ? '✅ Active' : '⏸ Inactive'}</div>
+    </div>
+    <div class="divider"></div>
+    <div><b>Description:</b></div>
+    <p class="muted text-sm" style="margin-top:6px;line-height:1.6;">${esc(p.description)}</p>
+  `);
+}
+
+/* ============================================================
+   ADD PRODUCT
+   ============================================================ */
+function renderAddProduct() {
+  return `
+    <div class="card">
+      <div class="card-head"><h4>➕ Add New Product</h4></div>
+      <div class="card-pad">
+        <form id="addProductForm" onsubmit="handleAddProduct(event)">
+          <div class="form-group">
+            <label>Product Name *</label>
+            <input required name="name" placeholder="e.g. NGK Spark Plug BKR6EIX">
+          </div>
+          <div class="form-row">
+            <div class="form-group">
+              <label>Price (TZS) *</label>
+              <input required type="number" name="price" min="0" placeholder="15000">
+            </div>
+            <div class="form-group">
+              <label>Stock *</label>
+              <input required type="number" name="stock" min="1" value="1">
+            </div>
+          </div>
+          <div class="form-row">
+            <div class="form-group">
+              <label>Category *</label>
+              <input required name="category" placeholder="e.g. Spark Plugs" list="cat-list">
+              <datalist id="cat-list">
+                <option>Spark Plugs</option>
+                <option>Glow Plugs</option>
+                <option>Ignition Coils</option>
+                <option>Spark Plug Wires</option>
+                <option>Other Spare Parts</option>
+              </datalist>
+            </div>
+            <div class="form-group">
+              <label>Car Brand *</label>
+              <input required name="carBrand" placeholder="e.g. Toyota" list="brand-list">
+              <datalist id="brand-list">
+                <option>Toyota</option>
+                <option>Nissan</option>
+                <option>Honda</option>
+                <option>Ford</option>
+                <option>Hyundai</option>
+                <option>Mercedes</option>
+                <option>BMW</option>
+                <option>Volkswagen</option>
+                <option>Mitsubishi</option>
+                <option>Suzuki</option>
+                <option>All Cars</option>
+              </datalist>
+            </div>
+          </div>
+          <div class="form-row">
+            <div class="form-group">
+              <label>Car Model (optional)</label>
+              <input name="carModel" placeholder="e.g. Corolla, Note">
+            </div>
+            <div class="form-group">
+              <label>Year Range (optional)</label>
+              <input name="year" placeholder="e.g. 2008-2015">
+            </div>
+          </div>
+          <div class="form-group">
+            <label>Description *</label>
+            <textarea required name="description" placeholder="Describe the product, features, compatibility..."></textarea>
+          </div>
+          <div class="form-group">
+            <label>Product Images (up to 5)</label>
+            <input type="file" accept="image/*" multiple id="imageInput" onchange="handleImages(event)">
+            <div class="img-preview" id="imgPreview"></div>
+          </div>
+          <div class="form-group">
+            <label>Product Video (optional, max 100MB)</label>
+            <input type="file" accept="video/*" id="videoInput" onchange="handleVideo(event)">
+            <div id="videoPreview" class="mt-1"></div>
+          </div>
+          <button type="submit" class="btn full" id="addBtn">📤 Publish Product</button>
+        </form>
+      </div>
+    </div>
+  `;
+}
+
+async function handleImages(e) {
+  const files = Array.from(e.target.files).slice(0, 5);
+  D.uploadImages = [];
+  $('#imgPreview').innerHTML = '';
+
+  for (const file of files) {
+    const fd = new FormData();
+    fd.append('image', file);
+    try {
+      const res = await API.post('/admin/upload/image', fd);
+      D.uploadImages.push(res.url);
+      $('#imgPreview').innerHTML += `<div class="item"><img src="${res.url}"></div>`;
+    } catch (err) {
+      toast('Image upload failed: ' + err.message, 'danger');
+    }
+  }
+  toast(`${D.uploadImages.length} image(s) uploaded ✓`, 'success');
+}
+
+async function handleVideo(e) {
+  const file = e.target.files[0];
+  if (!file) return;
+  if (file.size > 100 * 1024 * 1024) {
+    toast('Video too large (max 100MB)', 'danger');
+    return;
+  }
+  $('#videoPreview').innerHTML = '<p class="muted text-sm">⏳ Uploading video...</p>';
+  const fd = new FormData();
+  fd.append('video', file);
+  try {
+    const res = await API.post('/admin/upload/video', fd);
+    D.uploadVideo = res.url;
+    $('#videoPreview').innerHTML = `<video controls style="width:100%;border-radius:10px;max-height:200px;"><source src="${res.url}"></video>`;
+    toast('Video uploaded ✓', 'success');
+  } catch (err) {
+    $('#videoPreview').innerHTML = '';
+    toast('Video upload failed: ' + err.message, 'danger');
+  }
+}
+
+async function handleAddProduct(e) {
+  e.preventDefault();
+  const btn = $('#addBtn');
+  btn.disabled = true; btn.innerHTML = '<span class="spinner"></span> Publishing...';
+  const fd = new FormData(e.target);
+
+  try {
+    await API.post('/admin/products', {
+      name: fd.get('name').trim(),
+      description: fd.get('description').trim(),
+      price: parseFloat(fd.get('price')),
+      stock: parseInt(fd.get('stock')),
+      category: fd.get('category').trim(),
+      carBrand: fd.get('carBrand').trim(),
+      carModel: fd.get('carModel')?.trim() || '',
+      year: fd.get('year')?.trim() || '',
+      images: D.uploadImages,
+      video: D.uploadVideo
+    });
+
+    toast('Product published ✓', 'success');
+    D.uploadImages = [];
+    D.uploadVideo = null;
+    await loadAll();
+    navigate('products');
+  } catch (err) {
+    toast(err.message, 'danger');
+    btn.disabled = false; btn.textContent = '📤 Publish Product';
+  }
+}
+
+/* ============================================================
+   ORDERS
+   ============================================================ */
+function renderOrders() {
+  if (!D.orders.length) {
+    return `
+      <div class="card">
+        <div class="empty">
+          <div class="ico">🛒</div>
+          <p>No orders yet. When customers place orders, they'll appear here.</p>
+        </div>
+      </div>
+    `;
+  }
+
+  return `
+    <div class="card">
+      <div class="card-head"><h4>🛒 All Orders (${D.orders.length})</h4></div>
+      <div class="tbl-wrap">
+        <table class="tbl">
+          <tr><th>Date</th><th>Customer</th><th>Contact</th><th>Product</th><th>Type</th><th>Total</th><th>Status</th><th>Action</th></tr>
+          ${D.orders.map(o => `
+            <tr>
+              <td>${new Date(o.createdAt).toLocaleDateString()}<br><span class="text-sm muted">${fmtTime(o.createdAt)}</span></td>
+              <td><b>${esc(o.customerName)}</b></td>
+              <td>
+                <div class="text-sm">📞 ${esc(o.customerPhone)}</div>
+                <div class="text-sm muted">✉️ ${esc(o.customerEmail)}</div>
+              </td>
+              <td>${esc(o.productName)}<br><span class="text-sm muted">Qty: ${o.quantity}</span></td>
+              <td>${o.deliveryMethod === 'pickup' ? '🏬 Pickup' : '🚚 Delivery'}</td>
+              <td><b>TZS ${o.totalAmount.toLocaleString()}</b></td>
+              <td><span class="badge ${o.status}">${o.status}</span></td>
+              <td>
+                <select onchange="updateOrderStatus('${o._id}', this.value)" style="padding:5px;background:var(--bg2);color:var(--text);border:1px solid var(--border);border-radius:6px;font-size:11px;">
+                  ${['pending','confirmed','ready','shipped','completed','cancelled'].map(st =>
+                    `<option ${o.status===st?'selected':''}>${st}</option>`
+                  ).join('')}
+                </select>
+              </td>
+            </tr>
+          `).join('')}
+        </table>
+      </div>
+    </div>
+  `;
+}
+
+async function updateOrderStatus(id, status) {
+  try {
+    await API.patch('/admin/orders/' + id, { status });
+    toast('Order → ' + status, 'success');
+    await loadAll();
+    navigate('orders');
+  } catch (err) { toast(err.message, 'danger'); }
+}
+
+/* ============================================================
+   MODAL
+   ============================================================ */
+function showModal(title, bodyHTML) {
+  let bg = document.getElementById('adminModal');
+  if (!bg) {
+    bg = document.createElement('div');
+    bg.className = 'modal-bg'; bg.id = 'adminModal';
+    bg.onclick = e => { if (e.target === bg) closeModal(); };
+    bg.innerHTML = `<div class="modal"><div class="modal-head"><h3 id="mTitle"></h3><button class="modal-close" onclick="closeModal()">×</button></div><div class="modal-body" id="mBody"></div></div>`;
+    document.body.appendChild(bg);
+  }
+  document.getElementById('mTitle').innerHTML = title;
+  document.getElementById('mBody').innerHTML = bodyHTML;
+  bg.classList.add('open');
+}
+
+function closeModal() {
+  const bg = document.getElementById('adminModal');
+  if (bg) bg.classList.remove('open');
+}
+
+/* ============================================================
+   BOOT
+   ============================================================ */
+async function bootAdmin() {
+  renderNav();
+  await loadAll();
+  renderNav();
+  navigate('dashboard');
+}
+
+(function init() {
+  if (API.token) {
+    $('#loginScreen').style.display = 'none';
+    $('#adminPanel').style.display = 'flex';
+    bootAdmin();
+  }
+})();
+</script>
+</body>
+</html>
