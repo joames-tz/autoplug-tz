@@ -17,23 +17,25 @@
   body { font-family:-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; background:var(--bg); color:var(--text); min-height:100vh; display:flex; }
   a { color:var(--primary); }
 
-  /* ---------- LOGIN ---------- */
+  /* ============ LOGIN ============ */
   .login-screen { position:fixed; inset:0; background:var(--bg); display:flex; align-items:center; justify-content:center; z-index:1000; padding:20px; }
   .login-card { background:var(--card); border:1px solid var(--border); border-radius:18px; padding:34px; width:100%; max-width:400px; box-shadow:var(--shadow); }
   .login-card .brand-big { display:flex; align-items:center; gap:12px; margin-bottom:26px; }
-  .login-card .brand-big .logo { width:52px; height:52px; border-radius:12px; background:linear-gradient(135deg, var(--primary), var(--accent)); display:flex; align-items:center; justify-content:center; font-size:26px; }
+  .login-card .brand-big .logo { width:52px; height:52px; border-radius:12px; background:linear-gradient(135deg, var(--primary), var(--accent)); display:flex; align-items:center; justify-content:center; font-size:26px; overflow:hidden; }
+  .login-card .brand-big .logo img { width:100%; height:100%; object-fit:cover; }
   .login-card .brand-big h2 { font-size:19px; }
   .login-card .brand-big small { font-size:11px; color:var(--text-dim); }
   .login-card h3 { margin-bottom:6px; }
   .login-card p.hint { color:var(--text-dim); font-size:13px; margin-bottom:22px; }
 
-  /* ---------- SIDEBAR ---------- */
-  .sidebar { width:250px; background:var(--bg2); border-right:1px solid var(--border); padding:22px 0; position:fixed; top:0; bottom:0; left:0; display:flex; flex-direction:column; z-index:100; }
+  /* ============ SIDEBAR ============ */
+  .sidebar { width:250px; background:var(--bg2); border-right:1px solid var(--border); padding:22px 0; position:fixed; top:0; bottom:0; left:0; display:flex; flex-direction:column; z-index:100; transition:transform 0.25s ease; }
   .sidebar .brand { padding:0 22px 22px; border-bottom:1px solid var(--border); display:flex; align-items:center; gap:10px; }
-  .sidebar .brand .logo { width:40px; height:40px; border-radius:10px; background:linear-gradient(135deg, var(--primary), var(--accent)); display:flex; align-items:center; justify-content:center; font-size:22px; }
+  .sidebar .brand .logo { width:40px; height:40px; border-radius:10px; background:linear-gradient(135deg, var(--primary), var(--accent)); display:flex; align-items:center; justify-content:center; font-size:22px; overflow:hidden; flex-shrink:0; }
+  .sidebar .brand .logo img { width:100%; height:100%; object-fit:cover; }
   .sidebar .brand h1 { font-size:17px; font-weight:800; }
   .sidebar .brand small { display:block; font-size:10px; color:var(--text-dim); letter-spacing:0.5px; }
-  .sidebar nav { flex:1; padding:14px 0; }
+  .sidebar nav { flex:1; padding:14px 0; overflow-y:auto; }
   .nav-item { display:flex; align-items:center; gap:12px; padding:11px 22px; cursor:pointer; color:var(--text-dim); font-size:14px; font-weight:500; border-left:3px solid transparent; transition:all 0.15s; }
   .nav-item:hover { background:var(--card); color:var(--text); }
   .nav-item.active { background:var(--card); color:var(--text); border-left-color:var(--primary); }
@@ -43,14 +45,37 @@
   .sidebar .footer { padding:14px 22px; border-top:1px solid var(--border); font-size:12px; color:var(--text-dim); }
   .sidebar .footer .admin-name { color:var(--text); font-weight:700; margin-bottom:6px; }
 
-  /* ---------- MAIN ---------- */
+  /* ============ MAIN ============ */
   .main { flex:1; margin-left:250px; min-height:100vh; padding:0 0 40px; }
   .topbar { background:var(--bg2); border-bottom:1px solid var(--border); padding:16px 28px; position:sticky; top:0; z-index:50; display:flex; align-items:center; justify-content:space-between; gap:16px; }
   .topbar h2 { font-size:20px; font-weight:700; }
   .topbar .sub { font-size:12px; color:var(--text-dim); margin-top:2px; }
   .page { padding:24px 28px; }
 
-  /* ---------- STATS ---------- */
+  /* ============ MOBILE TOGGLE ============ */
+  .mobile-toggle {
+    display: none;
+    background: none;
+    border: none;
+    color: var(--text);
+    font-size: 24px;
+    cursor: pointer;
+    padding: 4px 10px;
+    border-radius: 8px;
+    font-family: inherit;
+  }
+  .mobile-toggle:active { background: var(--card); }
+
+  .sidebar-overlay {
+    display: none;
+    position: fixed;
+    inset: 0;
+    background: rgba(0,0,0,0.5);
+    z-index: 90;
+  }
+  .sidebar-overlay.open { display: block; }
+
+  /* ============ STATS ============ */
   .stats-grid { display:grid; grid-template-columns:repeat(auto-fit, minmax(190px, 1fr)); gap:16px; margin-bottom:24px; }
   .stat-card { background:var(--card); border:1px solid var(--border); border-radius:14px; padding:18px; position:relative; overflow:hidden; }
   .stat-card::before { content:''; position:absolute; top:0; left:0; right:0; height:3px; background:var(--primary); }
@@ -61,14 +86,14 @@
   .stat-card .num { font-size:28px; font-weight:800; margin:8px 0 4px; letter-spacing:-1px; }
   .stat-card .trend { font-size:12px; color:var(--text-dim); }
 
-  /* ---------- CARDS ---------- */
+  /* ============ CARDS ============ */
   .card { background:var(--card); border:1px solid var(--border); border-radius:14px; overflow:hidden; margin-bottom:16px; }
   .card-pad { padding:18px; }
   .card-head { padding:16px 18px; border-bottom:1px solid var(--border); display:flex; align-items:center; justify-content:space-between; gap:12px; flex-wrap:wrap; }
   .card-head h4 { font-size:15px; }
   .card-head .sub { font-size:12px; color:var(--text-dim); margin-top:2px; }
 
-  /* ---------- BUTTONS ---------- */
+  /* ============ BUTTONS ============ */
   .btn { padding:9px 16px; border-radius:9px; border:none; background:var(--primary); color:white; font-size:13px; font-weight:600; cursor:pointer; display:inline-flex; align-items:center; gap:6px; white-space:nowrap; transition:all 0.15s; font-family:inherit; }
   .btn:hover { background:var(--primary-dark); }
   .btn.small { padding:6px 11px; font-size:12px; }
@@ -80,7 +105,7 @@
   .btn.full { width:100%; }
   .btn:disabled { opacity:0.5; cursor:not-allowed; }
 
-  /* ---------- FORMS ---------- */
+  /* ============ FORMS ============ */
   .form-group { margin-bottom:14px; }
   .form-group label { display:block; font-size:12px; font-weight:700; margin-bottom:6px; color:var(--text-dim); text-transform:uppercase; letter-spacing:0.4px; }
   .form-group input, .form-group textarea, .form-group select { width:100%; padding:10px 12px; background:var(--bg2); border:1px solid var(--border); border-radius:9px; color:var(--text); font-size:13px; font-family:inherit; }
@@ -88,14 +113,14 @@
   .form-group textarea { resize:vertical; min-height:80px; }
   .form-row { display:grid; grid-template-columns:1fr 1fr; gap:14px; }
 
-  /* ---------- TABLES ---------- */
+  /* ============ TABLES ============ */
   .tbl-wrap { overflow-x:auto; }
   table.tbl { width:100%; border-collapse:collapse; font-size:13px; }
   table.tbl th, table.tbl td { padding:11px 14px; text-align:left; border-bottom:1px solid var(--border); }
   table.tbl th { background:var(--bg2); font-weight:700; font-size:11px; text-transform:uppercase; letter-spacing:0.5px; color:var(--text-dim); }
   table.tbl tr:hover td { background:var(--card2); }
 
-  /* ---------- BADGES ---------- */
+  /* ============ BADGES ============ */
   .badge { display:inline-block; padding:3px 9px; border-radius:6px; font-size:10px; font-weight:700; text-transform:uppercase; letter-spacing:0.4px; }
   .badge.pending { background:rgba(245,158,11,0.15); color:var(--warn); }
   .badge.confirmed { background:rgba(59,130,246,0.15); color:#3b82f6; }
@@ -104,13 +129,12 @@
   .badge.completed { background:rgba(34,197,94,0.15); color:var(--success); }
   .badge.cancelled { background:rgba(239,68,68,0.15); color:var(--danger); }
 
-  /* ---------- IMAGES ---------- */
+  /* ============ IMAGES ============ */
   .img-preview { display:grid; grid-template-columns:repeat(auto-fill, minmax(100px, 1fr)); gap:10px; margin-top:10px; }
   .img-preview .item { position:relative; aspect-ratio:1; border-radius:10px; overflow:hidden; border:1px solid var(--border); }
   .img-preview .item img { width:100%; height:100%; object-fit:cover; }
-  .img-preview .item .del { position:absolute; top:4px; right:4px; background:var(--danger); color:white; border:none; width:24px; height:24px; border-radius:50%; font-size:14px; cursor:pointer; }
 
-  /* ---------- PRODUCT GRID ---------- */
+  /* ============ PRODUCT GRID ============ */
   .product-grid { display:grid; grid-template-columns:repeat(auto-fill, minmax(260px, 1fr)); gap:16px; }
   .product-card { background:var(--card); border:1px solid var(--border); border-radius:14px; overflow:hidden; }
   .product-card img { width:100%; height:180px; object-fit:cover; background:var(--card2); }
@@ -120,7 +144,7 @@
   .product-card .meta { font-size:11px; color:var(--text-dim); margin:6px 0; }
   .product-card .actions { display:flex; gap:6px; margin-top:10px; }
 
-  /* ---------- MODAL ---------- */
+  /* ============ MODAL ============ */
   .modal-bg { position:fixed; inset:0; background:rgba(0,0,0,0.75); display:none; align-items:center; justify-content:center; z-index:500; padding:20px; backdrop-filter:blur(4px); }
   .modal-bg.open { display:flex; }
   .modal { background:var(--card); border-radius:16px; width:100%; max-width:640px; max-height:92vh; overflow-y:auto; border:1px solid var(--border); }
@@ -129,14 +153,14 @@
   .modal-close { background:none; border:none; color:var(--text-dim); font-size:24px; cursor:pointer; line-height:1; }
   .modal-body { padding:20px; }
 
-  /* ---------- TOAST ---------- */
+  /* ============ TOAST ============ */
   .toast { position:fixed; bottom:24px; right:24px; background:var(--card2); border:1px solid var(--border); color:var(--text); padding:13px 20px; border-radius:11px; z-index:9999; font-size:14px; box-shadow:var(--shadow); transform:translateY(100px); opacity:0; transition:all 0.3s; max-width:90vw; }
   .toast.show { transform:translateY(0); opacity:1; }
   .toast.success { border-left:3px solid var(--success); }
   .toast.danger { border-left:3px solid var(--danger); }
   .toast.warn { border-left:3px solid var(--warn); }
 
-  /* ---------- MISC ---------- */
+  /* ============ MISC ============ */
   .row { display:flex; gap:10px; flex-wrap:wrap; }
   .row > * { flex:1; min-width:140px; }
   .divider { height:1px; background:var(--border); margin:16px 0; }
@@ -150,12 +174,17 @@
   @keyframes spin { to { transform:rotate(360deg); } }
   .hidden { display:none !important; }
 
+  /* ============ MOBILE ============ */
   @media (max-width:900px) {
-    .sidebar { transform:translateX(-100%); transition:transform 0.25s; }
+    .sidebar { transform:translateX(-100%); }
     .sidebar.open { transform:translateX(0); }
     .main { margin-left:0; }
+    .mobile-toggle { display: block; }
     .page { padding:16px; }
     .topbar { padding:12px 16px; }
+    .form-row { grid-template-columns:1fr; }
+    table.tbl { font-size:12px; }
+    table.tbl th, table.tbl td { padding:8px 6px; }
   }
 </style>
 </head>
@@ -165,7 +194,7 @@
 <div class="login-screen" id="loginScreen">
   <div class="login-card">
     <div class="brand-big">
-      <div class="logo">⚙️</div>
+      <div class="logo">🔌</div>
       <div>
         <h2>AutoPlug Tz</h2>
         <small>ADMIN CONTROL CENTER</small>
@@ -187,11 +216,14 @@
   </div>
 </div>
 
+<!-- ============ SIDEBAR OVERLAY (mobile) ============ -->
+<div class="sidebar-overlay" id="sidebarOverlay" onclick="toggleSidebar()"></div>
+
 <!-- ============ ADMIN PANEL ============ -->
-<div id="adminPanel" style="display:none;">
+<div id="adminPanel" style="display:none;width:100%;">
   <aside class="sidebar" id="sidebar">
     <div class="brand">
-      <div class="logo">⚙️</div>
+      <div class="logo">🔌</div>
       <div>
         <h1>AutoPlug Tz</h1>
         <small>ADMIN</small>
@@ -207,9 +239,12 @@
 
   <div class="main">
     <div class="topbar">
-      <div>
-        <h2 id="pageTitle">Dashboard</h2>
-        <div class="sub" id="pageSub">Overview</div>
+      <div style="display:flex;align-items:center;gap:12px;">
+        <button class="mobile-toggle" onclick="toggleSidebar()">☰</button>
+        <div>
+          <h2 id="pageTitle">Dashboard</h2>
+          <div class="sub" id="pageSub">Overview</div>
+        </div>
       </div>
       <button class="btn ghost small" onclick="refreshAll()">🔄 Refresh</button>
     </div>
@@ -269,6 +304,15 @@ function toast(msg, type='') {
   clearTimeout(t._t); t._t = setTimeout(() => t.classList.remove('show'), 2600);
 }
 
+/* ---------- SIDEBAR TOGGLE (MOBILE) ---------- */
+function toggleSidebar() {
+  const sidebar = document.getElementById('sidebar');
+  const overlay = document.getElementById('sidebarOverlay');
+  if (!sidebar) return;
+  const isOpen = sidebar.classList.toggle('open');
+  if (overlay) overlay.classList.toggle('open', isOpen);
+}
+
 /* ---------- DATA STORE ---------- */
 const D = {
   stats: { products:0, orders:0, pending:0, completed:0, revenue:0 },
@@ -326,6 +370,12 @@ function navigate(route) {
   $('#pageSub').textContent = r.sub;
   renderNav();
   $('#pageContent').innerHTML = r.render();
+
+  // Auto-close sidebar on mobile
+  if (window.innerWidth <= 900) {
+    document.getElementById('sidebar').classList.remove('open');
+    document.getElementById('sidebarOverlay').classList.remove('open');
+  }
 }
 
 function renderNav() {
