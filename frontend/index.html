@@ -30,6 +30,12 @@
   .header { background:linear-gradient(135deg, #0a84ff 0%, #0062cc 100%); color:white; padding:14px 18px; position:sticky; top:0; z-index:40; display:flex; align-items:center; justify-content:space-between; box-shadow:0 4px 20px rgba(10,132,255,0.25); }
   .header .logo { display:flex; align-items:center; gap:10px; }
   .header .logo-icon { font-size:26px; }
+  .header .logo-img {
+  width: 32px;
+  height: 32px;
+  border-radius: 8px;
+  object-fit: cover;
+}
   .header h1 { font-size:18px; font-weight:800; letter-spacing:-0.4px; }
   .header .contact-btn { background:rgba(255,255,255,0.2); border:none; color:white; padding:8px 12px; border-radius:10px; font-size:12px; font-weight:700; display:flex; align-items:center; gap:5px; }
   .header .back-btn { background:rgba(255,255,255,0.2); border:none; color:white; width:36px; height:36px; border-radius:10px; font-size:18px; display:flex; align-items:center; justify-content:center; }
@@ -303,7 +309,7 @@ function renderHome() {
   return `
   <div class="app">
     <div class="header">
-      <div class="logo"><span class="logo-icon">⚙️</span><h1>AutoPlug Tz</h1></div>
+      <div class="logo"><img src="/logo.png" alt="AutoPlug Tz" class="logo-img"><h1>AutoPlug Tz</h1></div>
       <button class="contact-btn" onclick="openContactModal()">📞 Contact</button>
     </div>
 
